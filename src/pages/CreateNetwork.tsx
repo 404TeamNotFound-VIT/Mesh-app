@@ -86,9 +86,9 @@ export function CreateNetwork() {
                   navigator.clipboard.writeText(qrData);
                   alert("Offer Code copied to clipboard!");
                 }}
-                className="mt-4 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm w-full max-w-sm"
+                className="mt-6 px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 rounded-xl font-bold text-white w-full max-w-sm flex items-center justify-center gap-2 transition-all transform hover:scale-105"
               >
-                Or Copy Offer Code
+                <span className="text-xl">📋</span> Copy Offer Code Manually
               </button>
             </div>
           ) : (
@@ -109,6 +109,12 @@ export function CreateNetwork() {
                 <p className="mb-4 text-center text-sm text-slate-400">After they scan, scan their Answer QR code:</p>
                 <QRScannerWrapper onScan={handleScannedAnswer} />
                 
+                <div className="w-full flex items-center gap-4 my-6">
+                  <div className="h-px bg-slate-700 flex-1"></div>
+                  <span className="text-xs text-slate-500 font-bold uppercase tracking-widest">OR</span>
+                  <div className="h-px bg-slate-700 flex-1"></div>
+                </div>
+
                 <button 
                   onClick={() => {
                     const answer = prompt("Paste the Answer Code here:");
@@ -116,9 +122,9 @@ export function CreateNetwork() {
                       handleScannedAnswer(answer);
                     }
                   }}
-                  className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-sm w-full max-w-sm"
+                  className="px-6 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 rounded-xl font-bold text-white w-full max-w-sm flex items-center justify-center gap-2 transition-all transform hover:scale-105"
                 >
-                  Or Paste Answer Code
+                  <span className="text-xl">📥</span> Paste Answer Code Manually
                 </button>
               </>
             )}

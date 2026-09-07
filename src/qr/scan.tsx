@@ -8,8 +8,11 @@ interface Props {
 
 export function QRScannerWrapper({ onScan, onError }: Props) {
   const [errorMsg, setErrorMsg] = useState('');
+  const [isStarted, setIsStarted] = useState(false);
   
   useEffect(() => {
+    if (!isStarted) return;
+    
     let html5QrCode: Html5Qrcode | null = null;
     let isMounted = true;
     let scanning = false;
@@ -30,13 +33,12 @@ export function QRScannerWrapper({ onScan, onError }: Props) {
              }
           },
           () => {
-             // Ignoring parsing errors (happens on every frame that doesn't have a QR code)
+             // Ignoring parsing errors
           }
         );
         if (isMounted) {
            scanning = true;
         } else {
-           // We unmounted while starting
            html5QrCode.stop().then(() => html5QrCode?.clear()).catch(console.error);
         }
       } catch (err) {
@@ -47,7 +49,6 @@ export function QRScannerWrapper({ onScan, onError }: Props) {
       }
     };
 
-    // Small delay to ensure the DOM element is fully mounted and ready
     const timer = setTimeout(startScanner, 100);
 
     return () => {
@@ -57,11 +58,21 @@ export function QRScannerWrapper({ onScan, onError }: Props) {
         html5QrCode.stop().then(() => html5QrCode?.clear()).catch(console.error);
       }
     };
-  }, [onScan, onError]);
+  }, [isStarted, onScan, onError]);
 
   return (
     <div className="w-full flex flex-col items-center">
-      <div id="qr-reader" className="w-full max-w-sm overflow-hidden rounded-xl bg-slate-900 border-2 border-indigo-500/50 shadow-lg shadow-indigo-500/20"></div>
+      {!isStarted ? (
+        <button 
+          onClick={() => setIsStarted(true)}
+          className="w-full py-6 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl flex flex-col items-center justify-center transition-colors"
+        >
+          <span className="text-3xl mb-2">📸</span>
+          <span className="font-medium text-slate-300">Tap to Start Camera Scanner</span>
+        </button>
+      ) : (
+        <div id="qr-reader" className="w-full max-w-sm overflow-hidden rounded-xl bg-slate-900 border-2 border-indigo-500/50 shadow-lg shadow-indigo-500/20"></div>
+      )}
       {errorMsg && <p className="text-rose-400 mt-4 text-sm text-center px-4">{errorMsg}</p>}
     </div>
   );

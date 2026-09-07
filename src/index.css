@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-mesh-primary: #6366f1;
+  --color-mesh-secondary: #8b5cf6;
+  --color-mesh-accent: #06b6d4;
+  --color-mesh-dark: #0f172a;
+  --color-mesh-surface: #1e293b;
+  --color-mesh-text: #f8fafc;
+  --color-mesh-muted: #94a3b8;
+  --color-online: #22c55e;
+  --color-suspected: #eab308;
+  --color-offline: #6b7280;
+}
+
+/* Base styles for PWA standalone mode */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overscroll-behavior: none;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #334155;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #475569;
+}
+
+/* Custom styles for html5-qrcode UI to match app theme */
+#qr-reader {
+  border: none !important;
+}
+
+#qr-reader button {
+  background-color: #4f46e5;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  margin: 0.5rem 0;
+  transition: background-color 0.2s;
+}
+
+#qr-reader button:hover {
+  background-color: #4338ca;
+}
+
+#qr-reader select {
+  background-color: #1e293b;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #334155;
+  margin-bottom: 0.5rem;
+  width: 100%;
+}
+
+#qr-reader a {
+  color: #4f46e5 !important;
+  text-decoration: none;
+}

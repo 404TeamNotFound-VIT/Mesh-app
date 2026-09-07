@@ -135,6 +135,10 @@ export class WebRTCTransport implements Transport {
   private setupDataChannel(dc: RTCDataChannel, peerId: string) {
     dc.binaryType = 'arraybuffer';
     
+    if (dc.readyState === 'open') {
+      this.events?.onPeerConnected(peerId);
+    }
+    
     dc.onopen = () => {
       this.events?.onPeerConnected(peerId);
     };

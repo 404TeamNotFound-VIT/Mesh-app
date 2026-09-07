@@ -64,6 +64,16 @@ export class MeshManager {
     this.emit('peerLeft', peerId);
   }
 
+  public disconnectAll() {
+    const peers = this.transport.getConnectedPeers();
+    for (const peer of peers) {
+      this.transport.disconnect(peer);
+    }
+    this.peerManager.clear();
+    this.meshId = null;
+    this.emit('networkDisconnected');
+  }
+
   private handleTransportMessage(peerId: string, data: Uint8Array) {
     try {
       const text = new TextDecoder().decode(data);

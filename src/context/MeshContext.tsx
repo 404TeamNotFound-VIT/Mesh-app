@@ -50,6 +50,10 @@ export function MeshProvider({ children }: { children: React.ReactNode }) {
 
       mesh.on('networkCreated', (_event, data) => setMeshId(data.meshId));
       mesh.on('networkJoined', (_event, data) => setMeshId(data.meshId));
+      mesh.on('networkDisconnected', () => {
+        setMeshId(null);
+        setMessages([]);
+      });
 
       mesh.on('message', (_event, packet: MeshPacket) => {
         setMessages((prev) => [...prev, packet]);

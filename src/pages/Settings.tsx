@@ -3,7 +3,7 @@ import { useMesh } from '../context/MeshContext';
 import { getIdentity, updateDisplayName } from '../storage/identity';
 
 export function Settings() {
-  const { nodeId, meshId } = useMesh();
+  const { nodeId, meshId, meshManager } = useMesh();
   const [name, setName] = useState('');
 
   useEffect(() => {
@@ -52,7 +52,15 @@ export function Settings() {
       </div>
       
       <div className="pt-6 border-t border-slate-800">
-        <button className="w-full py-3 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-colors">
+        <button 
+          onClick={() => {
+            if (confirm("Are you sure you want to disconnect from this network?")) {
+              meshManager?.disconnectAll();
+              window.location.href = '/';
+            }
+          }}
+          className="w-full py-3 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-colors"
+        >
           Disconnect & Clear Data
         </button>
       </div>

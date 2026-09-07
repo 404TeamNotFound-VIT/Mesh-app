@@ -4,7 +4,7 @@ import { MessageBubble } from './MessageBubble';
 import { MessageType } from '../mesh/protocol';
 
 export function ChatBox() {
-  const { messages, meshManager, nodeId } = useMesh();
+  const { messages, meshManager, nodeId, peers } = useMesh();
   const [text, setText] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -26,9 +26,12 @@ export function ChatBox() {
         {chatMessages.length === 0 ? (
           <div className="text-center text-slate-500 my-auto text-sm">No messages yet. Say hello to the network!</div>
         ) : (
-          chatMessages.map(msg => (
-            <MessageBubble key={msg.id} message={msg} isOwn={msg.source === nodeId} />
-          ))
+          chatMessages.map(msg => {
+            const isOwn = msg.source === nodeId;
+            const peer = peers.find(p => p.nodeId === msg.source);
+            const displayName = isOwn ? "You" : (peer ? peer.displayName : `Node_${msg.source.substring(0,4)}`);
+            return <MessageBubble key={msg.id} message={{ ...msg, source: displayName }} isOwn={isOwn} />;
+          })
         )}
         <div ref={endRef} />
       </div>

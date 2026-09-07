@@ -41,6 +41,11 @@ export class PeerManager {
     return Array.from(this.peers.values());
   }
 
+  clear() {
+    this.peers.clear();
+    this.notify();
+  }
+
   subscribe(listener: (peers: Map<string, PeerEntry>) => void) {
     this.listeners.push(listener);
     return () => {

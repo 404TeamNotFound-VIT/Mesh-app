@@ -9,10 +9,11 @@ export class WebRTCTransport implements Transport {
   private connections = new Map<string, Connection>();
   private events?: TransportEvents;
 
-  // We are creating a local network connection, so no STUN/TURN servers are needed.
-  // The empty iceServers array forces WebRTC to use local IP addresses (host candidates).
+  // Adding a public STUN server helps force Android Chrome to gather local IP addresses
+  // even on a Mobile Hotspot. If the device is truly offline, this fails silently,
+  // but still triggers the local candidate gathering process.
   private config: RTCConfiguration = {
-    iceServers: [],
+    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
   };
 
   setEventHandlers(events: TransportEvents): void {

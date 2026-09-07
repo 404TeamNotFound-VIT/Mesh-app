@@ -12,6 +12,7 @@
   "dependencies": {
     "dexie": "^4.0.8",
     "html5-qrcode": "^2.3.8",
+    "jimp": "^1.6.1",
     "lz-string": "^1.5.0",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",

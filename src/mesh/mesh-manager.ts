@@ -42,13 +42,16 @@ export class MeshManager {
   async handleScannedOffer(qrData: string): Promise<string> {
     const data = JSON.parse(LZString.decompressFromEncodedURIComponent(qrData) || '{}');
     this.meshId = data.meshId;
-    const answerSdp = await this.transport.handleOffer(data.sdp);
+    this.emit('networkJoined', { meshId: this.meshId });
+    // Pass the Host's true nodeId to the transport layer
+    const answerSdp = await this.transport.handleOffer(data.sdp, data.nodeId);
     return LZString.compressToEncodedURIComponent(JSON.stringify({ nodeId: this.nodeId, sdp: answerSdp }));
   }
 
-  async handleScannedAnswer(qrData: string, peerId: string): Promise<void> {
+  async handleScannedAnswer(qrData: string): Promise<void> {
     const data = JSON.parse(LZString.decompressFromEncodedURIComponent(qrData) || '{}');
-    await this.transport.handleAnswer(data.sdp, peerId);
+    // Pass the Joiner's true nodeId to the transport layer
+    await this.transport.handleAnswer(data.sdp, data.nodeId);
   }
 
   private handlePeerConnected(peerId: string) {

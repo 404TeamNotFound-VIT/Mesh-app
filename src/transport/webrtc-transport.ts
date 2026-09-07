@@ -21,6 +21,7 @@ export class WebRTCTransport implements Transport {
   }
 
   private pendingPc: RTCPeerConnection | null = null;
+  private pendingDataChannel: RTCDataChannel | null = null;
   private pendingPeerId: string | null = null;
 
   async createOffer(): Promise<string> {
@@ -28,32 +29,29 @@ export class WebRTCTransport implements Transport {
     const dataChannel = pc.createDataChannel('mesh', { ordered: true });
     
     this.pendingPc = pc;
-    // Assume a pending peer ID for now, it can be updated on answer
-    this.pendingPeerId = 'pending_peer';
-    this.setupPeerConnection(pc, this.pendingPeerId, dataChannel);
-
+    this.pendingDataChannel = dataChannel;
+    
     return new Promise((resolve) => {
       pc.onicecandidate = (event) => {
         if (!event.candidate) {
-          // Gathering finished
           resolve(LZString.compressToEncodedURIComponent(JSON.stringify(pc.localDescription)));
         }
       };
-      
       pc.createOffer().then((offer) => pc.setLocalDescription(offer));
     });
   }
 
-  async handleOffer(offerData: string): Promise<string> {
+  // The Joiner calls this after scanning the Host's offer. The Joiner knows the Host's true peerId.
+  async handleOffer(offerData: string, peerId: string): Promise<string> {
     const offerDesc = JSON.parse(LZString.decompressFromEncodedURIComponent(offerData) || '{}');
     const pc = new RTCPeerConnection(this.config);
     
     return new Promise((resolve) => {
-      this.setupPeerConnection(pc, 'pending_peer'); // Temporary ID
+      this.setupPeerConnection(pc, peerId);
       
       pc.onicecandidate = (event) => {
         if (!event.candidate) {
-           this.connections.set('pending_peer', { pc, dataChannel: (pc as any)._dataChannel });
+           this.connections.set(peerId, { pc, dataChannel: (pc as any)._dataChannel });
            resolve(LZString.compressToEncodedURIComponent(JSON.stringify(pc.localDescription)));
         }
       };
@@ -64,23 +62,29 @@ export class WebRTCTransport implements Transport {
     });
   }
 
+  // The Host calls this after scanning the Joiner's answer. The Host knows the Joiner's true peerId.
   async handleAnswer(answerData: string, peerId: string): Promise<void> {
      if (!this.pendingPc) {
        throw new Error("No pending offer found to accept answer for.");
      }
      
      const answerDesc = JSON.parse(LZString.decompressFromEncodedURIComponent(answerData) || '{}');
-     await this.pendingPc.setRemoteDescription(new RTCSessionDescription(answerDesc));
+     const pc = this.pendingPc;
+     const dataChannel = this.pendingDataChannel;
      
-     // Once answered, we consider the connection active for this peerId
-     // For MVP, we just remap it if peerId changed from 'pending_peer'
-     const dataChannel = (this.pendingPc as any)._dataChannel || (this.pendingPc as any).createDataChannel('fallback');
-     this.connections.set(peerId, { pc: this.pendingPc, dataChannel });
+     await pc.setRemoteDescription(new RTCSessionDescription(answerDesc));
+     
+     // Now that we know the true peerId, we can set up the DataChannel and ICE events!
+     if (dataChannel) {
+       this.setupPeerConnection(pc, peerId, dataChannel);
+       this.connections.set(peerId, { pc, dataChannel });
+     }
+     
      this.pendingPc = null;
-     this.pendingPeerId = null;
+     this.pendingDataChannel = null;
   }
 
-  // Simplified MVP connection setup for peer-to-peer
+  // ... MVP methods ...
   async createOfferAndStore(peerId: string): Promise<{ offer: string, pc: RTCPeerConnection }> {
     const pc = new RTCPeerConnection(this.config);
     const dataChannel = pc.createDataChannel('mesh', { ordered: true });
@@ -103,23 +107,7 @@ export class WebRTCTransport implements Transport {
   }
 
   async handleOfferAndStore(offerData: string, peerId: string): Promise<string> {
-    const offerDesc = JSON.parse(LZString.decompressFromEncodedURIComponent(offerData) || '{}');
-    const pc = new RTCPeerConnection(this.config);
-    
-    return new Promise((resolve) => {
-      this.setupPeerConnection(pc, peerId);
-      
-      pc.onicecandidate = (event) => {
-        if (!event.candidate) {
-           this.connections.set(peerId, { pc, dataChannel: (pc as any)._dataChannel });
-           resolve(LZString.compressToEncodedURIComponent(JSON.stringify(pc.localDescription)));
-        }
-      };
-      
-      pc.setRemoteDescription(new RTCSessionDescription(offerDesc))
-        .then(() => pc.createAnswer())
-        .then((answer) => pc.setLocalDescription(answer));
-    });
+    return this.handleOffer(offerData, peerId);
   }
 
   private setupPeerConnection(pc: RTCPeerConnection, peerId: string, dataChannel?: RTCDataChannel) {
@@ -130,6 +118,11 @@ export class WebRTCTransport implements Transport {
     pc.ondatachannel = (event) => {
       (pc as any)._dataChannel = event.channel;
       this.setupDataChannel(event.channel, peerId);
+      // If the connection was already mapped without a channel, update it
+      const conn = this.connections.get(peerId);
+      if (conn) {
+        conn.dataChannel = event.channel;
+      }
     };
 
     pc.oniceconnectionstatechange = () => {
@@ -141,7 +134,10 @@ export class WebRTCTransport implements Transport {
 
   private setupDataChannel(dc: RTCDataChannel, peerId: string) {
     dc.binaryType = 'arraybuffer';
-    dc.onopen = () => this.events?.onPeerConnected(peerId);
+    
+    dc.onopen = () => {
+      this.events?.onPeerConnected(peerId);
+    };
     dc.onclose = () => this.events?.onPeerDisconnected(peerId);
     dc.onerror = () => this.events?.onError(peerId, new Error("DataChannel error"));
     dc.onmessage = (event) => {
@@ -176,7 +172,7 @@ export class WebRTCTransport implements Transport {
   getConnectedPeers(): string[] {
     const connected: string[] = [];
     for (const [peerId, conn] of this.connections.entries()) {
-      if (conn.dataChannel.readyState === 'open') {
+      if (conn.dataChannel && conn.dataChannel.readyState === 'open') {
         connected.push(peerId);
       }
     }

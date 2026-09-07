@@ -30,6 +30,7 @@ export function MeshProvider({ children }: { children: React.ReactNode }) {
   const [peers, setPeers] = useState<PeerEntry[]>([]);
   const [messages, setMessages] = useState<MeshPacket[]>([]);
   const [nodeId, setNodeId] = useState<string | null>(null);
+  const [meshId, setMeshId] = useState<string | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -46,6 +47,9 @@ export function MeshProvider({ children }: { children: React.ReactNode }) {
       peerManager.subscribe((peerMap) => {
         setPeers(Array.from(peerMap.values()));
       });
+
+      mesh.on('networkCreated', (_event, data) => setMeshId(data.meshId));
+      mesh.on('networkJoined', (_event, data) => setMeshId(data.meshId));
 
       mesh.on('message', (_event, packet: MeshPacket) => {
         setMessages((prev) => [...prev, packet]);
@@ -69,8 +73,8 @@ export function MeshProvider({ children }: { children: React.ReactNode }) {
 
   // Reload messages when meshId changes
   useEffect(() => {
-    if (manager?.meshId) {
-       getMessagesByMesh(manager.meshId).then((msgs) => {
+    if (meshId) {
+       getMessagesByMesh(meshId).then((msgs) => {
           // Convert MeshMessage to MeshPacket for UI
           const packets: MeshPacket[] = msgs.map(m => ({
             ...m,
@@ -79,7 +83,7 @@ export function MeshProvider({ children }: { children: React.ReactNode }) {
           setMessages(packets);
        });
     }
-  }, [manager?.meshId]);
+  }, [meshId]);
 
   return (
     <MeshContext.Provider
@@ -87,7 +91,7 @@ export function MeshProvider({ children }: { children: React.ReactNode }) {
         meshManager: manager,
         peers,
         messages,
-        meshId: manager?.meshId || null,
+        meshId,
         nodeId,
         isConnected: peers.length > 0,
       }}

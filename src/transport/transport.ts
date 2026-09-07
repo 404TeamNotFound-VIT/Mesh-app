@@ -13,7 +13,7 @@ export interface TransportEvents {
 
 export interface Transport {
   createOffer(): Promise<string>;
-  handleOffer(offerData: string): Promise<string>;
+  handleOffer(offerData: string, peerId: string): Promise<string>;
   handleAnswer(answerData: string, peerId: string): Promise<void>;
   send(peerId: string, data: Uint8Array): Promise<void>;
   disconnect(peerId: string): void;

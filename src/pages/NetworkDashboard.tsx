@@ -3,6 +3,7 @@ import { useMesh } from '../context/MeshContext';
 import { PeerList } from '../components/PeerList';
 import { QRDisplay } from '../components/QRDisplay';
 import { QRScannerWrapper } from '../qr/scan';
+import { ChatBox } from '../components/ChatBox';
 import { useNavigate } from 'react-router-dom';
 
 export function NetworkDashboard() {
@@ -31,7 +32,7 @@ export function NetworkDashboard() {
 
   const handleScannedAnswer = async (data: string) => {
     if (!meshManager) return;
-    await meshManager.handleScannedAnswer(data, "pending_peer_new");
+    await meshManager.handleScannedAnswer(data);
     setShowInviteQR(false);
     setIsScanning(false);
   };
@@ -60,6 +61,7 @@ export function NetworkDashboard() {
       <div className="flex-1">
         <h3 className="text-sm font-semibold text-slate-400 mb-3 px-1">Connected Peers</h3>
         <PeerList peers={peers} myNodeId={nodeId!} />
+        <ChatBox />
       </div>
 
       {showInviteQR && (

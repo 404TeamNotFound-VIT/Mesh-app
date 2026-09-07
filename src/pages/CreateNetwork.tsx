@@ -25,12 +25,17 @@ export function CreateNetwork() {
     setStep(3);
   };
 
+  const [isConnecting, setIsConnecting] = useState(false);
+
   const handleScannedAnswer = async (data: string) => {
     if (!meshManager) return;
-    // For MVP, we assume the peer ID is derived from the answer or we just use a generic flow.
-    // The handleScannedAnswer in meshManager should take care of setting remote desc.
-    await meshManager.handleScannedAnswer(data, "pending_peer"); // Simplified
-    navigate('/network');
+    setIsConnecting(true);
+    await meshManager.handleScannedAnswer(data);
+    
+    // Give a short delay so the user sees the connection success message before navigating
+    setTimeout(() => {
+      navigate('/network');
+    }, 1500);
   };
 
   return (
@@ -91,20 +96,32 @@ export function CreateNetwork() {
           )}
           
           <div className="mt-8 w-full border-t border-slate-700 pt-6 flex flex-col items-center">
-            <p className="mb-4 text-center text-sm text-slate-400">After they scan, scan their Answer QR code:</p>
-            <QRScannerWrapper onScan={handleScannedAnswer} />
-            
-            <button 
-              onClick={() => {
-                const answer = prompt("Paste the Answer Code here:");
-                if (answer) {
-                  handleScannedAnswer(answer);
-                }
-              }}
-              className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-sm w-full max-w-sm"
-            >
-              Or Paste Answer Code
-            </button>
+            {isConnecting ? (
+              <div className="flex flex-col items-center justify-center p-8 text-center animate-pulse">
+                <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
+                  <span className="text-3xl">✅</span>
+                </div>
+                <h3 className="text-xl font-bold text-green-400 mb-2">Connection Established!</h3>
+                <p className="text-slate-400">Taking you to the network dashboard...</p>
+              </div>
+            ) : (
+              <>
+                <p className="mb-4 text-center text-sm text-slate-400">After they scan, scan their Answer QR code:</p>
+                <QRScannerWrapper onScan={handleScannedAnswer} />
+                
+                <button 
+                  onClick={() => {
+                    const answer = prompt("Paste the Answer Code here:");
+                    if (answer) {
+                      handleScannedAnswer(answer);
+                    }
+                  }}
+                  className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-sm w-full max-w-sm"
+                >
+                  Or Paste Answer Code
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
